@@ -1,0 +1,5 @@
+
+# DATA DUMMY — tidak di-commit (permintaan user 2026-10-21)
+frontend/src/lib/api/dummy.ts
+# Test dummy mengimpor dummy.ts (gitignored) — ikut dikecualikan agar clone bersih tidak patah
+frontend/tests/dummy.test.ts

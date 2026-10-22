@@ -1,0 +1,79 @@
+/*
+Desain token tema Claude — SATU sumber kebenaran tema (diport dari v2).
+Komponen hanya memakai token/kelas utilitas, tidak hard-code warna.
+*/
+@import 'tailwindcss';
+/* Tema syntax highlight (gelap netral) untuk code block markdown-it */
+@import 'highlight.js/styles/atom-one-dark.css';
+@plugin '@tailwindcss/typography';
+
+@theme {
+	--color-paper: #f5f4ef;
+	--color-card: #ffffff;
+	--color-ink: #2d2a26;
+	--color-muted: #6e6a63;
+	--color-accent: #d97757;
+	--color-accent-soft: #f4e3db;
+	--color-border: #e8e5dd;
+
+	--font-prose: Georgia, 'Times New Roman', serif;
+	--font-ui: system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+	--radius-card: 0.875rem;
+}
+
+html {
+	background-color: var(--color-paper);
+	color: var(--color-ink);
+	font-family: var(--font-ui);
+}
+
+/* Prose serif khas Claude — dipakai MarkdownPreview & reading view */
+.prose-claude {
+	font-family: var(--font-prose);
+	color: var(--color-ink);
+}
+
+.prose-claude a {
+	color: var(--color-accent);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.prose-claude code {
+	background-color: var(--color-accent-soft);
+	border-radius: 0.25rem;
+	padding: 0.1rem 0.3rem;
+	font-size: 0.875em;
+}
+
+/* ══ Code block & inline code hasil render markdown-it (F2/F5) ══
+Blok kode gelap agar terbaca (kontras tinggi, radius kartu, scroll horizontal);
+nilai warna lewat token — sama dengan #2d2a26 / #f5f4ef yang diminta desain. */
+.prose pre {
+	background-color: var(--color-ink);
+	color: var(--color-paper);
+	border-radius: var(--radius-card);
+	padding: 1rem 1.25rem;
+	overflow-x: auto;
+	font-size: 0.8rem;
+	line-height: 1.55;
+	font-family: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+}
+/* Inline code: chip lembut accent-soft dengan tinta — sesuai gaya lama,
+kini HANYA di luar pre sehingga code block tidak ikut "terchip". */
+.prose :not(pre) > code {
+	background-color: var(--color-accent-soft);
+	color: var(--color-ink);
+	border-radius: 0.25rem;
+	padding: 0.1rem 0.3rem;
+	font-size: 0.875em;
+}
+/* Aturan .prose-claude code di atas (dipakai tempat lain, jangan dihapus)
+menimpa code DI DALAM pre juga — dinetralkan tanpa menghapusnya. */
+.prose-claude pre code {
+	background-color: transparent;
+	color: inherit;
+	border-radius: 0;
+	padding: 0;
+	font-size: inherit;
+}
