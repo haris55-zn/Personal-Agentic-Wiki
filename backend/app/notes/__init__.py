@@ -1,0 +1,1 @@
+"""Fitur catatan (tabel, CRUD, endpoint)."""
