@@ -3,3 +3,11 @@
 frontend/src/lib/api/dummy.ts
 # Test dummy mengimpor dummy.ts (gitignored) — ikut dikecualikan agar clone bersih tidak patah
 frontend/tests/dummy.test.ts
+
+# ── Python / uv (backend) ──
+.venv/
+__pycache__/
+*.pyc
+
+# Secrets — .env asli tidak di-commit; .env.example tetap ikut
+.env
