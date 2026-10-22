@@ -5,9 +5,12 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "chromadb>=1.5.9",
     "fastapi>=0.159.1",
     "pydantic-settings>=2.16.1",
+    "sentence-transformers>=6.2.0",
     "sqlmodel>=0.0.48",
+    "torch>=2.14.1",
     "uvicorn[standard]>=0.54.0",
 ]
 
@@ -15,3 +18,13 @@ dependencies = [
 dev = [
     "httpx>=0.28.1",
 ]
+
+# torch diambil dari indeks CPU PyTorch (bukan build CUDA default di PyPI),
+# supaya ukuran install kecil — wiki ini inference di CPU, bukan GPU.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }

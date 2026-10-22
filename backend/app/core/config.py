@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     llm_base_url: str = ""
     llm_model: str = "deepseek-v4-pro"
-    embedding_model: str = "BAAI/bge-m3"
+    embedding_model: str = "intfloat/multilingual-e5-small"
     # Satu URL untuk semua DB: SQLite bawaan, atau Postgres via `DATABASE_URL`.
     database_url: str = f"sqlite:///{DATA_DIR / 'paw.db'}"
     chroma_path: Path = DATA_DIR / "chroma"
