@@ -5,8 +5,8 @@ from sqlmodel import JSON, Column, Field, SQLModel
 
 
 def utcnow() -> datetime:
-    """Waktu UTC sekarang, naive (SQLite tak menyimpan zona waktu)."""
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    """Waktu UTC sekarang (aware). SQLModel 0.0.48 `UTCDateTime` menyimpan & menyajikan aware-UTC."""
+    return datetime.now(timezone.utc)
 
 
 class Note(SQLModel, table=True):
