@@ -21,3 +21,8 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# DATA DUMMY — tidak di-commit (permintaan user 2026-10-21)
+src/lib/api/dummy.ts
+# Test dummy mengimpor dummy.ts (gitignored) — ikut dikecualikan agar clone bersih tidak patah
+tests/dummy.test.ts

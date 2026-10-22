@@ -1,0 +1,10 @@
+# ── Python / uv ──
+.venv/
+__pycache__/
+*.pyc
+
+# Secrets — `.env` asli tidak di-commit; `.env.example` tetap ikut
+.env
+
+# Data runtime (SQLite + Chroma) — dibuat saat app jalan, tidak di-commit
+data/
