@@ -77,3 +77,26 @@ def delete_note(session: Session, slug: str) -> bool:
     session.delete(note)
     session.commit()
     return True
+
+
+def apply_diff(session: Session, *, slug: str, title: str, content: str,
+               tags: list[str], source: str | None, type_: str) -> tuple[Note, bool]:
+    """Terapkan draft edit — UPSERT by slug (slug di-pin draft, TIDAK di-uniquify/re-slug).
+
+    Beda dari `create_note`/`update_note` (yang meng-uniquify & re-slug dari judul):
+    `apply-diff` adalah gerbang tulis agentic — slug draft bersifat final.
+    Update hanya ganti title/content/tags/updated_at (type/source/slug dipertahankan).
+    """
+    note = get_note(session, slug)
+    created = note is None
+    if created:
+        note = Note(slug=slug, title=title, content=content, tags=tags, source=source, type=type_)
+        session.add(note)
+    else:
+        note.title = title
+        note.content = content
+        note.tags = tags
+        note.updated_at = utcnow()
+    session.commit()
+    session.refresh(note)
+    return note, created

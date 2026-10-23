@@ -28,6 +28,8 @@ from sqlmodel import Session
 
 from app.chat.llm import build_model
 from app.chat.tools import note_read, note_search, web_search
+from app.edits.extract import extract_drafts
+from app.edits.tools import note_write
 
 SYSTEM_PROMPT = """\
 Kamu asisten wiki pribadi "paw" (sekumpulan note markdown lokal).
@@ -36,6 +38,7 @@ Alat (tool) yang tersedia:
 - note_search: cari note berdasarkan kata kunci.
 - note_read: baca isi penuh satu note (slug dari hasil note_search).
 - web_search: cari di internet (DuckDuckGo) bila info tidak ada di wiki.
+- note_write: usulkan buat/ubah note (HANYA draft — user yang Apply).
 
 Aturan urutan (routing):
 1. Pertanyaan isi wiki → WAJIB note_search dulu; butuh detail/kutip → note_read(slug).
@@ -43,16 +46,17 @@ Aturan urutan (routing):
 3. Jangan panggil dua tool sekaligus; selesaikan satu dulu.
 4. Jawab singkat & langsung ke inti, dalam bahasa user (umumnya Indonesia).
 5. Jangan mengarang isi. Bila tak ketemu di mana pun, katakan tak ketemu + sarankan kata kunci lain.
+6. Bila user minta buat/ubah note, usulkan lewat note_write (draft, belum menulis). slug = huruf kecil, dipisah "-".
 """
 
 
 def build_agent() -> Agent:
-    """Bangun agent (LLM + 3 tool + deps sesi DB) — dipakai seluruh proses."""
+    """Bangun agent (LLM + 4 tool + deps sesi DB) — dipakai seluruh proses."""
     return Agent(
         build_model(),
         deps_type=Session,
         system_prompt=SYSTEM_PROMPT,
-        tools=[note_search, note_read, web_search],
+        tools=[note_search, note_read, web_search, note_write],
     )
 
 
@@ -68,11 +72,15 @@ def _map_message(message) -> list[dict]:
     for part in message.parts:
         kind = getattr(part, "part_kind", None)
         if kind == "tool-call":
+            args = part.args
+            # note_write membawa content markdown (bisa panjang); jejak cukup butuh intinya.
+            if part.tool_name == "note_write":
+                args = {k: part.args.get(k) for k in ("action", "slug", "title")}
             events.append({
                 "event": "react",
                 "step": "action",
                 "tool": part.tool_name,
-                "args": json.dumps(part.args, ensure_ascii=False),
+                "args": json.dumps(args, ensure_ascii=False),
             })
         elif kind == "tool-return":
             events.append({
@@ -95,3 +103,5 @@ async def stream_events(message: str, session: Session):
         for ev in _map_message(msg):
             yield ev
     yield {"event": "answer", "content": result.output}
+    for draft in extract_drafts(result.all_messages(), session):
+        yield {"event": "draft", **draft}

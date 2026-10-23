@@ -33,6 +33,16 @@ class NoteRead(SQLModel):
     updated_at: datetime
 
 
+class ApplyDiffBody(SQLModel):
+    """Body POST /apply-diff (== argumen `applyDiff` TS): slug + isi versi baru."""
+    slug: str
+    title: str
+    content_markdown: str
+    tags: list[str] = Field(default_factory=list)
+    source: str | None = None
+    type_: str = "note"
+
+
 router = APIRouter(prefix="/api/notes", tags=["notes"])
 
 
@@ -66,6 +76,22 @@ def create_note(body: NoteInput, session: Session = Depends(get_session)):
     note = crud.create_note(session, body.title, body.content, body.tags)
     _reindex(note)
     return note
+
+
+@router.post("/apply-diff")
+def apply_diff(body: ApplyDiffBody, session: Session = Depends(get_session)):
+    """Gerbang tulis agentic: satu-satunya jalur persisten draft (Apply user)."""
+    note, _created = crud.apply_diff(
+        session,
+        slug=body.slug,
+        title=body.title,
+        content=body.content_markdown,
+        tags=body.tags,
+        source=body.source,
+        type_=body.type_,
+    )
+    _reindex(note)
+    return {"saved": True, "slug": note.slug, "path": f"wiki/notes/{note.slug}.md"}
 
 
 @router.get("/{slug}/backlinks", response_model=list[NoteRead])
