@@ -14,9 +14,10 @@ from typing import AsyncIterator
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from pydantic_ai.exceptions import UserError
+from pydantic_ai.messages import ModelRequest, ModelResponse, SystemPromptPart, TextPart, UserPromptPart
 from sqlmodel import SQLModel, Session, select
 
-from app.chat.agent import build_agent, stream_events
+from app.chat.agent import SYSTEM_PROMPT, build_agent, stream_events
 from app.chat.models import ChatMessage, ChatSession
 from app.core.database import get_session
 from app.notes.models import utcnow
@@ -66,11 +67,30 @@ def _touch(session: Session, session_id: str) -> None:
         session.add(cs)
 
 
-async def _sse(message: str, session: Session, session_id: str) -> AsyncIterator[str]:
+def _load_history(session: Session, session_id: str) -> list:
+    """Riwayat sesi → list ModelMessage untuk `agent.run(message_history=...)`.
+
+    Model butuh konteks giliran sebelumnya; tanpa ini tiap pesan = percakapan baru
+    (amnesia). System prompt disertakan sebagai pesan pertama karena pydantic-ai
+    TIDAK menyuntikkannya lagi saat `message_history` tidak kosong.
+    """
+    history: list = [ModelRequest(parts=[SystemPromptPart(content=SYSTEM_PROMPT)])]
+    rows = session.exec(
+        select(ChatMessage).where(ChatMessage.session_id == session_id).order_by(ChatMessage.id)
+    )
+    for row in rows:
+        if row.role == "user":
+            history.append(ModelRequest(parts=[UserPromptPart(content=row.content)]))
+        else:
+            history.append(ModelResponse(parts=[TextPart(content=row.content)]))
+    return history
+
+
+async def _sse(message: str, session: Session, session_id: str, history: list) -> AsyncIterator[str]:
     """Teruskan event agen sebagai bingkai SSE, lalu simpan jawaban asisten."""
     answer: list[str] = []
     try:
-        async for ev in stream_events(message, session):
+        async for ev in stream_events(message, session, history):
             if ev.get("event") == "answer":
                 answer.append(ev["content"])
             yield f"data: {json.dumps(ev, ensure_ascii=False)}\n\n"
@@ -97,13 +117,14 @@ async def chat(body: ChatRequest, session: Session = Depends(get_session)):
             detail="LLM belum dikonfigurasi — jalankan `uv run paw-cli set-llm` dulu",
         ) from exc
 
+    history = _load_history(session, body.session_id)  # riwayat SEBELUM pesan baru
     _get_or_create_session(session, body.session_id, body.message)
     _append_message(session, body.session_id, "user", body.message)
     _touch(session, body.session_id)
     session.commit()
 
     return StreamingResponse(
-        _sse(body.message, session, body.session_id),
+        _sse(body.message, session, body.session_id, history),
         media_type="text/event-stream",
     )
 

@@ -99,14 +99,17 @@ def _map_message(message) -> list[dict]:
     return events
 
 
-async def stream_events(message: str, session: Session):
+async def stream_events(message: str, session: Session, message_history: list | None = None):
     """Jalankan agent untuk `message` + sesi DB (deps), hasilkan event SSE frontend.
+
+    `message_history` = riwayat percakapan sesi (list ModelMessage). Tanpa ini,
+    tiap pesan dianggap percakapan BARU → model amnesia (tak ingat "opsi 2" dsb).
 
     Urutan: (react action → react observation)* → answer.
     `result.output` = teks jawaban final (default `output_type=str`).
     """
     agent = build_agent()
-    result = await agent.run(message, deps=session)
+    result = await agent.run(message, deps=session, message_history=message_history)
     for msg in result.all_messages():
         for ev in _map_message(msg):
             yield ev
