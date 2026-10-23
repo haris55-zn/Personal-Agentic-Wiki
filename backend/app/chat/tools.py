@@ -15,6 +15,7 @@ BELAJAR — apa itu "tool" di pydantic-ai:
     `deps_type` di agent.py + `agent.run(..., deps=session)`).
 """
 import asyncio
+import logging
 
 from ddgs import DDGS
 from pydantic_ai import RunContext
@@ -22,6 +23,8 @@ from sqlmodel import Session
 
 from app.notes.crud import get_note
 from app.search.service import search_wiki
+
+_log = logging.getLogger(__name__)
 
 
 def note_search(query: str) -> str:
@@ -59,5 +62,14 @@ async def web_search(query: str) -> str:
     Balas daftar "judul — URL (ringkasan)", atau "tidak ada hasil web"."""
     # `.text()` BLOKIR (network). Tool async tak boleh memanggilnya langsung di
     # event loop — pindahkan ke thread via `asyncio.to_thread` agar loop tak macet.
-    results = await asyncio.to_thread(_ddg_client.text, query, max_results=5)
+    try:
+        results = await asyncio.to_thread(_ddg_client.text, query, max_results=5)
+    except Exception as exc:  # noqa: BLE001 — DDG timeout/diblokir (network)
+        # Satu tool gagal TAK BOLEH mematikan seluruh sesi agen. Balas status
+        # terdegradasi supaya LLM tetap bisa menjawab wajar (bilang web tak tersedia).
+        _log.warning("web search gagal: %s", exc)
+        return (
+            f"web search GAGAL ({type(exc).__name__}). "
+            "Sampaikan ke user bahwa pencarian web sedang tidak tersedia."
+        )
     return _format_web(results)
