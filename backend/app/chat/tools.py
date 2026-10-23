@@ -49,7 +49,8 @@ def note_read(ctx: RunContext[Session], slug: str) -> str:
 # Klien DuckDuckGo dibuat sekali (singleton). `.text()` = panggilan jaringan blocking.
 # backend="lite": endpoint html.duckduckgo.com kerap di-blok/rate-limit (case
 # timeout yang membunuh sesi). lite (lite.duckduckgo.com) tembus. Cadangan: "bing".
-_ddg_client = DDGS()
+# timeout=15: extract() butuh >5s untuk situs internasional (uji: uvicorn.dev).
+_ddg_client = DDGS(timeout=15)
 
 
 def _format_web(results: list[dict]) -> str:
@@ -75,3 +76,20 @@ async def web_search(query: str) -> str:
             "Sampaikan ke user bahwa pencarian web sedang tidak tersedia."
         )
     return _format_web(results)
+
+
+async def web_read(url: str) -> str:
+    """Baca isi PENUH satu halaman web. `url`: alamat dari hasil web_search.
+    Balas isi halaman sebagai markdown (dipotong ~6000 char), atau pesan gagal."""
+    try:
+        # `extract()` BLOKIR (HTTP GET + ubah HTML→markdown). Pindah ke thread.
+        data = await asyncio.to_thread(_ddg_client.extract, url)
+        content = data.get("content", "") if isinstance(data, dict) else str(data)
+        if not content:
+            return f"halaman '{url}' kosong / tidak bisa dibaca."
+        if len(content) > 6000:
+            content = content[:6000] + "\n…(dipotong)"
+        return f"URL: {url}\n\n{content}"
+    except Exception as exc:  # noqa: BLE001 — timeout/network/format gagal
+        _log.warning("web_read gagal %s: %s", url, exc)
+        return f"web_read GAGAL ({type(exc).__name__}). Halaman '{url}' tidak bisa diakses."

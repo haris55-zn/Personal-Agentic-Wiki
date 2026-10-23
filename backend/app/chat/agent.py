@@ -27,7 +27,7 @@ from pydantic_ai import Agent
 from sqlmodel import Session
 
 from app.chat.llm import build_model
-from app.chat.tools import note_read, note_search, web_search
+from app.chat.tools import note_read, note_search, web_read, web_search
 from app.edits.extract import extract_drafts
 from app.edits.tools import note_write
 
@@ -38,11 +38,12 @@ Alat (tool) yang tersedia:
 - note_search: cari note berdasarkan kata kunci.
 - note_read: baca isi penuh satu note (slug dari hasil note_search).
 - web_search: cari di internet (DuckDuckGo) bila info tidak ada di wiki.
+- web_read: baca isi penuh satu halaman web (url dari hasil web_search).
 - note_write: usulkan buat/ubah note (HANYA draft — user yang Apply).
 
 Aturan urutan (routing):
 1. Pertanyaan isi wiki → WAJIB note_search dulu; butuh detail/kutip → note_read(slug).
-2. Fakta umum/terkini yang TIDAK ada di wiki → web_search.
+2. Fakta umum/terkini yang TIDAK ada di wiki → web_search; butuh detail/kutip → web_read(url).
 3. Jangan panggil dua tool sekaligus; selesaikan satu dulu.
 4. Jawab singkat & langsung ke inti, dalam bahasa user (umumnya Indonesia).
 5. Jangan mengarang isi. Bila tak ketemu di mana pun, katakan tak ketemu + sarankan kata kunci lain.
@@ -51,12 +52,12 @@ Aturan urutan (routing):
 
 
 def build_agent() -> Agent:
-    """Bangun agent (LLM + 4 tool + deps sesi DB) — dipakai seluruh proses."""
+    """Bangun agent (LLM + 5 tool + deps sesi DB) — dipakai seluruh proses."""
     return Agent(
         build_model(),
         deps_type=Session,
         system_prompt=SYSTEM_PROMPT,
-        tools=[note_search, note_read, web_search, note_write],
+        tools=[note_search, note_read, web_search, web_read, note_write],
     )
 
 
