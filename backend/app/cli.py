@@ -13,8 +13,8 @@ ENV_FILE = BACKEND_DIR / ".env"
 
 PROVIDERS = {
     "qwen": {
-        "label": "QwenCloud (Qwen)",
-        "base_url": "https://ap-southeast-1.maas.qwencloudapi.com/compatible-mode/v1",
+        "label": "QwenCloud Token Plan (Qwen)",
+        "base_url": "https://token-plan.maas.qwencloudapi.com/compatible-mode/v1",
         "default_model": "qwen3.8-max",
     },
     "opencode": {
