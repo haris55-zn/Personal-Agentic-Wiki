@@ -59,7 +59,7 @@ def _format_web(results: list[dict]) -> str:
 
 
 async def web_search(query: str) -> str:
-    """Cari di internet via DuckDuckGo. `query`: kata kunci.
+    """Cari di internet (web search). `query`: kata kunci.
     Balas daftar "judul — URL (ringkasan)", atau "tidak ada hasil web"."""
     # `.text()` BLOKIR (network). Tool async tak boleh memanggilnya langsung di
     # event loop — pindahkan ke thread via `asyncio.to_thread` agar loop tak macet.

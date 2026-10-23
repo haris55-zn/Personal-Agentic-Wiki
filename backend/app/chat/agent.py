@@ -74,9 +74,16 @@ def _map_message(message) -> list[dict]:
         kind = getattr(part, "part_kind", None)
         if kind == "tool-call":
             args = part.args
-            # note_write membawa content markdown (bisa panjang); jejak cukup butuh intinya.
-            if part.tool_name == "note_write":
-                args = {k: part.args.get(k) for k in ("action", "slug", "title")}
+            # `part.args` bisa `dict` ATAU string JSON mentah (tergantung provider/model).
+            # Normalisasi jadi dict dulu, supaya `.get()` di bawah aman.
+            if isinstance(args, str):
+                try:
+                    args = json.loads(args)
+                except (json.JSONDecodeError, TypeError):
+                    args = {}
+            # note_write membawa content markdown (bisa panjang); jejak cukup intinya.
+            if part.tool_name == "note_write" and isinstance(args, dict):
+                args = {k: args.get(k) for k in ("action", "slug", "title")}
             events.append({
                 "event": "react",
                 "step": "action",
