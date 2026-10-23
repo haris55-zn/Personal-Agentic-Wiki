@@ -24,6 +24,7 @@ def create_db_and_tables() -> None:
     """Buat seluruh tabel terdaftar bila belum ada (idempotent — tak drop/alter data)."""
     # Import model dulu agar tabelnya terdaftar di SQLModel.metadata sebelum `create_all`.
     import app.notes.models  # noqa: F401  (sisi-efek: daftarkan tabel Note/NoteChunk)
+    import app.chat.models  # noqa: F401  (sisi-efek: daftarkan tabel ChatSession/ChatMessage)
 
     SQLModel.metadata.create_all(engine)
 
