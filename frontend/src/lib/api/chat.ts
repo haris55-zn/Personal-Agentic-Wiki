@@ -3,14 +3,6 @@
 import { API_BASE_URL } from './client';
 import { apiFetch } from './client';
 import type { ChatMessage, ChatSession } from './types';
-import {
-	FIXTURES_ON,
-	fixtureDeleteSession,
-	fixtureListSessions,
-	fixtureLoadHistory,
-	fixturePropose,
-	fixtureStreamChat
-} from './dummy';
 
 export interface StreamEvent {
 	event: string;
@@ -38,10 +30,6 @@ export async function* streamChat(
 	message: string,
 	signal?: AbortSignal
 ): AsyncGenerator<StreamEvent> {
-	if (FIXTURES_ON) {
-		yield* fixtureStreamChat(sessionId, message);
-		return;
-	}
 	const response = await fetch(`${API_BASE_URL}/api/chat`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -83,18 +71,15 @@ export async function* streamChat(
 }
 
 export async function loadHistory(sessionId: string): Promise<ChatMessage[]> {
-	if (FIXTURES_ON) return fixtureLoadHistory(sessionId);
 	return apiFetch<ChatMessage[]>(`/api/chat/history/${sessionId}`);
 }
 
 // REVISI-3 (mockup "Chat | Recent Chat"): daftar sesi lama + hapus sesi.
 export async function listSessions(): Promise<ChatSession[]> {
-	if (FIXTURES_ON) return fixtureListSessions();
 	return apiFetch<ChatSession[]>('/api/chat/sessions');
 }
 
 export async function deleteSession(sessionId: string): Promise<{ deleted: string }> {
-	if (FIXTURES_ON) return fixtureDeleteSession(sessionId);
 	return apiFetch<{ deleted: string }>(`/api/chat/sessions/${sessionId}`, { method: 'DELETE' });
 }
 
@@ -120,7 +105,6 @@ export async function proposeEdit(
 	instruction: string,
 	sessionId: string
 ): Promise<ProposeResult> {
-	if (FIXTURES_ON) return fixturePropose(slug, instruction);
 	return apiFetch<ProposeResult>('/api/editor/propose', {
 		method: 'POST',
 		body: JSON.stringify({ slug, instruction, session_id: sessionId })
