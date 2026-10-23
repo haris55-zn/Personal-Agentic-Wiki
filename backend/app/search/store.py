@@ -55,6 +55,11 @@ def delete_note(note_id: int) -> None:
     _get_collection().delete(where={"note_id": note_id})
 
 
+def clear() -> None:
+    """Kosongkan seluruh koleksi (untuk rebuild penuh)."""
+    _get_collection().delete(where={"note_id": {"$gte": 0}})
+
+
 def search(query_vec: list[float], limit: int) -> list[dict]:
     """Kembalikan `limit` hasil terdekat (distance cosine, makin kecil makin mirip)."""
     col = _get_collection()

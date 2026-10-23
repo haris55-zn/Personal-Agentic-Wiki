@@ -81,17 +81,37 @@ def cmd_set_llm() -> int:
     return 0
 
 
+def cmd_reindex() -> int:
+    """Bangun ulang indeks pencarian dari seluruh note di DB."""
+    from sqlmodel import Session, select
+
+    from app.notes.models import Note
+    from app.search import store
+    from app.search.service import reindex_note
+
+    store.clear()
+    with Session(engine) as session:
+        notes = list(session.exec(select(Note).order_by(Note.id)))
+    for note in notes:
+        reindex_note(note)
+    print(f"Indeks dibangun ulang: {len(notes)} note.")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="paw", description="CLI setup paw")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("migrate", help="buat tabel jika belum ada (create/connect)")
     sub.add_parser("set-llm", help="pilih provider LLM + simpan token ke .env")
+    sub.add_parser("reindex", help="bangun ulang indeks pencarian dari seluruh note")
     args = parser.parse_args(argv)
 
     if args.command == "migrate":
         return cmd_migrate()
     if args.command == "set-llm":
         return cmd_set_llm()
+    if args.command == "reindex":
+        return cmd_reindex()
     parser.error(f"perintah tidak dikenal: {args.command!r}")
     return 1  # tak tercapai
 

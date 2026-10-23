@@ -5,6 +5,7 @@ from fastapi import FastAPI
 
 from app.core.database import create_db_and_tables
 from app.notes.router import router as notes_router
+from app.search.router import router as search_router
 
 
 @asynccontextmanager
@@ -16,3 +17,4 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="paw backend", lifespan=lifespan)
 app.include_router(notes_router)
+app.include_router(search_router)
