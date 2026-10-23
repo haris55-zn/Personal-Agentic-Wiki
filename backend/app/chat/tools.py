@@ -46,9 +46,8 @@ def note_read(ctx: RunContext[Session], slug: str) -> str:
     return f"# {note.title}\n\n{note.content}"
 
 
-# ddgs v9 = metasearch. Engine "duckduckgo" (html.duckduckgo.com) dan mayoritas
-# engine lain (google/wikipedia/mojeek/brave) di-blok jaringan user. Yang tembus:
-# grokipedia (cepat) + bing (nyata, lambat) → pilih keduanya, kucul "duckduckgo".
+# ddgs v9 = metasearch. Hampir semua engine di-blok jaringan user; hanya bing
+# yang tembus (mesin pencari nyata, walau lambat ~14s). Pakai bing saja.
 _ddg_client = DDGS(timeout=15)
 
 
@@ -65,7 +64,7 @@ async def web_search(query: str) -> str:
     # `.text()` BLOKIR (network). Tool async tak boleh memanggilnya langsung di
     # event loop — pindahkan ke thread via `asyncio.to_thread` agar loop tak macet.
     try:
-        results = await asyncio.to_thread(_ddg_client.text, query, max_results=5, backend="grokipedia,bing")
+        results = await asyncio.to_thread(_ddg_client.text, query, max_results=5, backend="bing")
     except Exception as exc:  # noqa: BLE001 — DDG timeout/diblokir (network)
         # Satu tool gagal TAK BOLEH mematikan seluruh sesi agen. Balas status
         # terdegradasi supaya LLM tetap bisa menjawab wajar (bilang web tak tersedia).
