@@ -4,6 +4,8 @@ Jantung alur draft: saat LLM memanggil `note_write`, pydantic-ai menyimpan
 `ToolCallPart(args={...})` di `all_messages()`. Kita pindai part itu, ubah
 `args` jadi `NoteEdit`, lalu HITUNG `diff` (dari isi lama di DB) + `preview`.
 """
+import json
+
 from sqlmodel import Session
 
 from app.edits.diff import make_diff, make_preview
@@ -35,7 +37,14 @@ def extract_drafts(messages, session: Session) -> list[dict]:
     for message in messages:
         for part in message.parts:
             if getattr(part, "part_kind", None) == "tool-call" and part.tool_name == "note_write":
-                edit = NoteEdit(**part.args)
+                # `part.args` bisa dict ATAU string JSON mentah (tergantung provider).
+                args = part.args
+                if isinstance(args, str):
+                    try:
+                        args = json.loads(args)
+                    except (json.JSONDecodeError, TypeError):
+                        continue  # arg tak terbaca — lewati part, jangan matikan sesi
+                edit = NoteEdit(**args)
                 old = None
                 if edit.action == "update":
                     note = get_note(session, edit.slug)

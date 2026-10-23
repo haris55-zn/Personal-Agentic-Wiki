@@ -3,8 +3,8 @@
 BELAJAR — dua model yang berbeda peran:
   - `NoteEdit` (pydantic `BaseModel`) = argumen tool. Pydantic-ai mengubahnya
     jadi JSON Schema yang dikirim ke LLM; LLM WAJIB mengisi field ini saat
-    memanggil `note_write`. Karena strukturnya terdefinisi, `part.args` sudah
-    terjamin valid (`action` == create/update, dst) — kita tinggal `NoteEdit(**args)`.
+    memanggil `note_write`. Catatan: `part.args` bisa `dict` ATAU string JSON
+    mentah (tergantung provider) — normalisasi dulu sebelum `NoteEdit(**args)`.
   - `DraftOut` (SQLModel) = bentuk draft yang dikirim ke frontend, DITAMBAH
     `diff` + `preview` yang dihitung backend (bukan dari LLM).
 """
