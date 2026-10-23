@@ -120,8 +120,7 @@ tidak boleh memuat token template). Di bawah: markup + ekspresi kurung-kurawal. 
 	</div>
 
 	<!-- Banner error global (bukan alert) — pengguna masih bisa coba aksi lain.
-	Selama FIXTURES_ON=true pesan ini praktis tidak muncul (data dump lokal
-	tidak bisa gagal network). -->
+	Pesan ini muncul bila backend tak merespon (misal belum jalan di localhost:8000). -->
 	{#if error}
 		<div class="rounded-card border border-accent/40 bg-accent-soft/50 px-6 py-4 font-ui text-sm text-ink">
 			{error} — pastikan backend jalan di <code>localhost:8000</code>.
